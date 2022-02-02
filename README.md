@@ -25,10 +25,10 @@ keptn install --endpoint-service-type=LoadBalancer
 
 **Install job-executor-service**
 
-Experimental: Install from this PR: https://github.com/keptn-contrib/job-executor-service/pull/146
+Minimum version: 0.1.6
 
 ```bash
-helm upgrade --install -n keptn job-executor-service https://raw.githubusercontent.com/christian-kreuzberger-dtx/keptn-job-executor-delivery-poc/main/job-executor/job-executor-service-0.1.5-dev-PR-146.tgz --set jobConfig.enableKubernetesApiAccess=true --wait
+helm upgrade --install -n keptn job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/0.1.6/job-executor-service-0.1.6.tgz --set jobConfig.enableKubernetesApiAccess=true --wait
 ```
 
 **Apply cluster role binding for job-executor-service**
