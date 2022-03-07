@@ -8,21 +8,12 @@ actions:
         files:
           - /charts
         env:
-          - name: PROJECT
-            value: "$.data.project"
-            valueFrom: event
-          - name: STAGE
-            value: "$.data.stage"
-            valueFrom: event
-          - name: SERVICE
-            value: "$.data.service"
-            valueFrom: event
           - name: IMAGE
             value: "$.data.configurationChange.values.image"
             valueFrom: event
         image: "alpine/helm:3.7.2"
         cmd: ["helm"]
-        args: ["upgrade", "--create-namespace", "--install", "-n", "$(PROJECT)-$(STAGE)", "$(SERVICE)", "/keptn/charts/$(SERVICE).tgz", "--set", "image=$(IMAGE)", "--wait"]
+        args: ["upgrade", "--create-namespace", "--install", "-n", "$(KEPTN_PROJECT)-$(KEPTN_STAGE)", "$(KEPTN_SERVICE)", "/keptn/charts/$(KEPTN_SERVICE).tgz", "--set", "image=$(IMAGE)", "--wait"]
 
   - name: "Run tests using locust"
     events:
@@ -32,16 +23,7 @@ actions:
         files:
           - locust/basic.py
           - locust/locust.conf
-        env:
-          - name: PROJECT
-            value: "$.data.project"
-            valueFrom: event
-          - name: STAGE
-            value: "$.data.stage"
-            valueFrom: event
-          - name: SERVICE
-            value: "$.data.service"
-            valueFrom: event
+
         image: "locustio/locust"
         cmd: ["locust"]
-        args: ["--config", "/keptn/locust/locust.conf", "-f", "/keptn/locust/basic.py", "--host", "http://$(SERVICE).$(PROJECT)-$(STAGE)", "--only-summary"]
+        args: ["--config", "/keptn/locust/locust.conf", "-f", "/keptn/locust/basic.py", "--host", "http://$(KEPTN_SERVICE).$(KEPTN_PROJECT)-$(KEPTN_STAGE)", "--only-summary"]
