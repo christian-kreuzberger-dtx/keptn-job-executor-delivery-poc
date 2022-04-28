@@ -16,29 +16,38 @@
 I recommend using Google Kubernetes Engine, but local setups with K3s/K3d should also work fine.
 
 
-**Install Keptn 0.10.0 control-plane only**
+**Install Keptn 0.13.x control-plane only**
 
 ```bash
-curl -sL https://get.keptn.sh | KEPTN_VERSION=0.10.0 bash
+curl -sL https://get.keptn.sh | KEPTN_VERSION=0.13.4 bash
 keptn install --endpoint-service-type=LoadBalancer
 ```
 
 **Install job-executor-service**
 
-Minimum version: 0.1.6
+Minimum version: 0.2.0-next.0
 
 ```bash
-helm upgrade --install -n keptn job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/0.1.6/job-executor-service-0.1.6.tgz --set jobConfig.enableKubernetesApiAccess=true --wait
+
+KEPTN_API_PROTOCOL=http # or https
+KEPTN_API_HOST=api-gateway-nginx.keptn
+ KEPTN_API_TOKEN=<your-api-key>
+
+TASK_SUBSCRIPTION=sh\.keptn\.event\.je-deployment\.triggered
+
+helm upgrade --install --create-namespace -n keptn-jes \
+  job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/0.2.0-next.0/job-executor-service-0.2.0-next.0.tgz \
+ --set remoteControlPlane.topicSubscription=${TASK_SUBSCRIPTION},remoteControlPlane.api.protocol=${KEPTN_API_PROTOCOL},remoteControlPlane.api.hostname=${KEPTN_API_HOST},remoteControlPlane.api.token=${KEPTN_API_TOKEN}
 ```
 
-**Apply cluster role binding for job-executor-service**
+**Apply cluster role binding for helm deploy task**
 
-This gives the job-executor-service role `job-executor-service` full `cluster-admin` access to your Kubernetes cluster. This is not recommended for production setups, but it is needed for this PoC to work (e.g., `helm upgrade` needs to be able to create namespaces, secrets, ...)
+This gives the helm deploy task full `cluster-admin` access to your Kubernetes cluster. This is not recommended for production setups, but it is needed for this PoC to work (e.g., `helm upgrade` needs to be able to create namespaces, secrets, ...)
 
-See [job-executor/clusterRoleBinding.yaml](job-executor/clusterRoleBinding.yaml) for details.
+See [job-executor/workloadClusterRoles.yaml](job-executor/workloadClusterRoles.yaml) for details.
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/christian-kreuzberger-dtx/keptn-job-executor-delivery-poc/main/job-executor/clusterRoleBinding.yaml
+kubectl apply -f https://raw.githubusercontent.com/christian-kreuzberger-dtx/keptn-job-executor-delivery-poc/main/job-executor/workloadClusterRoles.yaml
 ```
 
 **Install Prometheus Monitoring**
@@ -101,6 +110,11 @@ keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resour
 keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resource=slo.yaml --resourceUri=slo.yaml
 ```
 
+Demo: Dynatrace SLI
+```bash
+keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resource=dynatrace/sli.yaml --resourceUri=dynatrace/sli.yaml
+```
+
 **Configure Prometheus Monitoring**
 
 ```bash
@@ -147,7 +161,7 @@ helm uninstall prometheus --namespace monitoring
 
 **Remove role binding**
 ```bash
-kubectl delete -f https://raw.githubusercontent.com/christian-kreuzberger-dtx/keptn-job-executor-delivery-poc/main/job-executor/clusterRoleBinding.yaml
+kubectl delete -f https://raw.githubusercontent.com/christian-kreuzberger-dtx/keptn-job-executor-delivery-poc/main/job-executor/workloadClusterRoles.yaml
 ```
 
 **Uninstall job-executor-service**
