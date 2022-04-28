@@ -25,6 +25,6 @@ actions:
           - locust/basic.py
           - locust/locust.conf
 
-        image: "locustio/locust"
+        image: "locustio/locust:2.8.6"
         cmd: ["locust"]
         args: ["--config", "/keptn/locust/locust.conf", "-f", "/keptn/locust/basic.py", "--host", "http://$(KEPTN_SERVICE).$(KEPTN_PROJECT)-$(KEPTN_STAGE)", "--only-summary"]
