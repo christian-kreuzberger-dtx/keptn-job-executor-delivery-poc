@@ -19,13 +19,13 @@ I recommend using Google Kubernetes Engine, but local setups with K3s/K3d should
 **Install Keptn 0.13.x control-plane only**
 
 ```bash
-curl -sL https://get.keptn.sh | KEPTN_VERSION=0.13.4 bash
+curl -sL https://get.keptn.sh | KEPTN_VERSION=0.13.5 bash
 keptn install --endpoint-service-type=LoadBalancer
 ```
 
 **Install job-executor-service**
 
-Minimum version: 0.2.0-next.0
+Minimum version: 0.2.0
 
 ```bash
 
@@ -33,11 +33,11 @@ KEPTN_API_PROTOCOL=http # or https
 KEPTN_API_HOST=api-gateway-nginx.keptn
  KEPTN_API_TOKEN=<your-api-key>
 
-TASK_SUBSCRIPTION=sh\.keptn\.event\.je-deployment\.triggered
+TASK_SUBSCRIPTION='sh.keptn.event.je-deployment.triggered\,sh.keptn.event.je-test.triggered'
 
 helm upgrade --install --create-namespace -n keptn-jes \
-  job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/0.2.0-next.0/job-executor-service-0.2.0-next.0.tgz \
- --set remoteControlPlane.topicSubscription=${TASK_SUBSCRIPTION},remoteControlPlane.api.protocol=${KEPTN_API_PROTOCOL},remoteControlPlane.api.hostname=${KEPTN_API_HOST},remoteControlPlane.api.token=${KEPTN_API_TOKEN}
+  job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/0.2.0/job-executor-service-0.2.0.tgz \
+ --set remoteControlPlane.topicSubscription="${TASK_SUBSCRIPTION}",remoteControlPlane.api.protocol=${KEPTN_API_PROTOCOL},remoteControlPlane.api.hostname=${KEPTN_API_HOST},remoteControlPlane.api.token=${KEPTN_API_TOKEN}
 ```
 
 **Apply cluster role binding for helm deploy task**
@@ -61,8 +61,8 @@ helm install prometheus prometheus-community/prometheus --namespace monitoring -
 
 **Install Keptns prometheus-service**
 ```bash
-helm install -n keptn prometheus-service https://github.com/keptn-contrib/prometheus-service/releases/download/0.7.2/prometheus-service-0.7.2.tgz --wait
-kubectl apply -f https://raw.githubusercontent.com/keptn-contrib/prometheus-service/release-0.7.2/deploy/role.yaml -n monitoring
+helm install -n keptn prometheus-service https://github.com/keptn-contrib/prometheus-service/releases/download/0.7.4/prometheus-service-0.7.4.tgz --wait
+kubectl apply -f https://raw.githubusercontent.com/keptn-contrib/prometheus-service/0.7.4/deploy/role.yaml -n monitoring
 ```
 
 ## Project Setup
@@ -108,11 +108,6 @@ keptn add-resource --project=$PROJECT --service=helloservice --all-stages --reso
 ```bash
 keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resource=prometheus/sli.yaml --resourceUri=prometheus/sli.yaml
 keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resource=slo.yaml --resourceUri=slo.yaml
-```
-
-Demo: Dynatrace SLI
-```bash
-keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resource=dynatrace/sli.yaml --resourceUri=dynatrace/sli.yaml
 ```
 
 **Configure Prometheus Monitoring**
@@ -167,5 +162,5 @@ kubectl delete -f https://raw.githubusercontent.com/christian-kreuzberger-dtx/ke
 **Uninstall job-executor-service**
 
 ```bash
-helm uninstall -n keptn job-executor-service
+helm uninstall -n keptn-jes job-executor-service
 ```
