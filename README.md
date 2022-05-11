@@ -31,7 +31,7 @@ Minimum version: 0.2.0
 
 KEPTN_API_PROTOCOL=http # or https
 KEPTN_API_HOST=api-gateway-nginx.keptn
- KEPTN_API_TOKEN=<your-api-key>
+KEPTN_API_TOKEN=<your-api-key>
 
 TASK_SUBSCRIPTION='sh.keptn.event.je-deployment.triggered\,sh.keptn.event.je-test.triggered'
 
@@ -61,7 +61,7 @@ helm install prometheus prometheus-community/prometheus --namespace monitoring -
 
 **Install Keptns prometheus-service**
 ```bash
-helm install -n keptn prometheus-service https://github.com/keptn-contrib/prometheus-service/releases/download/0.7.4/prometheus-service-0.7.4.tgz --wait
+helm upgrade --install -n keptn prometheus-service https://github.com/keptn-contrib/prometheus-service/releases/download/0.7.4/prometheus-service-0.7.4.tgz --wait --set distributor.image.tag="0.14.1"
 kubectl apply -f https://raw.githubusercontent.com/keptn-contrib/prometheus-service/0.7.4/deploy/role.yaml -n monitoring
 ```
 
