@@ -92,9 +92,13 @@ keptn add-resource --project=$PROJECT --service=helloservice --all-stages --reso
 
 **Add locust test files**
 
+The same load test files will be used in both stages, for simplicity of this tutorial.
+
 ```bash
 keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resource=./locust/basic.py
 keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resource=./locust/locust.conf
+keptn add-resource --project=$PROJECT --service=helloservice --stage=production --resource=./locust/basic.py
+keptn add-resource --project=$PROJECT --service=helloservice --stage=production --resource=./locust/locust.conf
 ```
 
 **Add job-executor config**
@@ -105,9 +109,13 @@ keptn add-resource --project=$PROJECT --service=helloservice --all-stages --reso
 
 **Add SLO/SLI config files**
 
+The same SLI and SLO definitions are used in both `qa` and `production` only for simplicity of this tutorial. In reality, different definitions would most likely be used, which Keptn supports.
+
 ```bash
 keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resource=prometheus/sli.yaml --resourceUri=prometheus/sli.yaml
 keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resource=slo.yaml --resourceUri=slo.yaml
+keptn add-resource --project=$PROJECT --service=helloservice --stage=production --resource=prometheus/sli.yaml --resourceUri=prometheus/sli.yaml
+keptn add-resource --project=$PROJECT --service=helloservice --stage=production --resource=slo.yaml --resourceUri=slo.yaml
 ```
 
 **Configure Prometheus Monitoring**
