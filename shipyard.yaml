@@ -25,3 +25,7 @@ spec:
                 pass: "manual"
                 warning: "manual"
             - name: "je-deployment"
+            - name: "je-test"
+            - name: "evaluation"
+              properties:
+                timeframe: "2m"
