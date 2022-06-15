@@ -1,21 +1,5 @@
 apiVersion: v2
 actions:
-  - name: "Deploy using helm"
-    events:
-      - name: "sh.keptn.event.je-deployment.triggered"
-    tasks:
-      - name: "Run helm"
-        files:
-          - /charts
-        env:
-          - name: IMAGE
-            value: "$.data.configurationChange.values.image"
-            valueFrom: event
-        image: "alpine/helm:3.7.2"
-        serviceAccount: "jes-deploy-using-helm"
-        cmd: ["helm"]
-        args: ["upgrade", "--create-namespace", "--install", "-n", "$(KEPTN_PROJECT)-$(KEPTN_STAGE)", "$(KEPTN_SERVICE)", "/keptn/charts/$(KEPTN_SERVICE).tgz", "--set", "image=$(IMAGE)", "--wait"]
-
   - name: "Run tests using locust"
     events:
       - name: "sh.keptn.event.je-test.triggered"
@@ -27,4 +11,5 @@ actions:
 
         image: "locustio/locust:2.8.6"
         cmd: ["locust"]
-        args: ["--config", "/keptn/locust/locust.conf", "-f", "/keptn/locust/basic.py", "--host", "http://$(KEPTN_SERVICE).$(KEPTN_PROJECT)-$(KEPTN_STAGE)", "--only-summary"]
+        args: ["--config", "/keptn/locust/locust.conf", "-f", "/keptn/locust/basic.py", "--host", \
+               "http://$(KEPTN_SERVICE).$(KEPTN_PROJECT)-$(KEPTN_STAGE)", "--only-summary"]
