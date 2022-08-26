@@ -8,11 +8,20 @@ spec:
       sequences:
         - name: "delivery"
           tasks:
-            - name: "je-deployment"
-            - name: "je-test"
+            - name: "deployment"
+            - name: "test"
             - name: "evaluation"
               properties:
                 timeframe: "2m"
+
+        - name: "rollback"
+          triggeredOn:
+            - event: "qa.delivery.finished"
+              selector:
+                match:
+                  result: "fail"
+          tasks:
+            - name: "rollback"
 
     - name: "production"
       sequences:
@@ -24,4 +33,19 @@ spec:
               properties:
                 pass: "manual"
                 warning: "manual"
-            - name: "je-deployment"
+            - name: "deployment"
+
+
+        - name: "remediation"
+          triggeredOn:
+            - event: "production.remediation.finished"
+              selector:
+                match:
+                  evaluation.result: "fail"
+          tasks:
+            - name: "get-action"
+            - name: "action"
+            - name: "evaluation"
+              triggeredAfter: "2m"
+              properties:
+                timeframe: "2m"

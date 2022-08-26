@@ -1,0 +1,23 @@
+apiVersion: spec.keptn.sh/0.1.4
+kind: Remediation
+metadata:
+  name: remediation-configuration
+spec:
+  remediations: 
+    - problemType: Response time degradation
+      actionsOnOpen:
+        - action: scaling
+          name: scaling
+          description: Scaling up deployment by 3
+          value: "3"
+        - action: rollback
+          name: rollback
+          description: Rolling back deployment to previous version
+          value: ""
+          
+    - problemType: "default"
+      actionsOnOpen:
+      - name: Rollback
+        action: rollback
+        description: Rollback deployment
+        value:

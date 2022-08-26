@@ -16,36 +16,42 @@
 I recommend using Google Kubernetes Engine, but local setups with K3s/K3d should also work fine.
 
 
-**Install Keptn 0.13.x control-plane only**
+**Install Keptn 0.17.x control-plane only**
 
 ```bash
-curl -sL https://get.keptn.sh | KEPTN_VERSION=0.13.5 bash
+curl -sL https://get.keptn.sh | KEPTN_VERSION=0.17.0 bash
 keptn install --endpoint-service-type=LoadBalancer
 ```
 
 **Install job-executor-service**
 
-Minimum version: 0.2.0
+Minimum version: 0.2.4
 
 ```bash
 
-KEPTN_API_PROTOCOL=http # or https
-KEPTN_API_HOST=api-gateway-nginx.keptn
- KEPTN_API_TOKEN=<your-api-key>
-
-TASK_SUBSCRIPTION='sh.keptn.event.je-deployment.triggered\,sh.keptn.event.je-test.triggered'
+TASK_SUBSCRIPTION='sh.keptn.event.deployment.triggered\,sh.keptn.event.test.triggered\,sh.keptn.event.rollback.triggered'
 
 helm upgrade --install --create-namespace -n keptn-jes \
-  job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/0.2.0/job-executor-service-0.2.0.tgz \
- --set remoteControlPlane.topicSubscription="${TASK_SUBSCRIPTION}",remoteControlPlane.api.protocol=${KEPTN_API_PROTOCOL},remoteControlPlane.api.hostname=${KEPTN_API_HOST},remoteControlPlane.api.token=${KEPTN_API_TOKEN}
+  job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/0.2.5-next.0/job-executor-service-0.2.5-next.0.tgz \
+ --set remoteControlPlane.autoDetect.namespace="keptn",remoteControlPlane.autoDetect.enabled="true",remoteControlPlane.api.token="",remoteControlPlane.api.hostname="",remoteControlPlane.api.protocol="http"
 ```
 
-**Apply cluster role binding for helm deploy task**
+**Kubernetes Role Based Access Control (RBAC) for helm deploy task**
 
-This gives the helm deploy task full `cluster-admin` access to your Kubernetes cluster. This is not recommended for production setups, but it is needed for this PoC to work (e.g., `helm upgrade` needs to be able to create namespaces, secrets, ...)
+By default the job-executor-service does not grant access to the Kubernetes api, the respective jobs (e.g., `helm install` or `helm upgrade`) would fail with `The connection to the server localhost:8080 was refused - did you specify the right host or port?`.
 
-See [job-executor/workloadClusterRoles.yaml](job-executor/workloadClusterRoles.yaml) for details.
+Therefore we have to define a service account for helm which allow the respective task/job to
 
+* create namespaces, and
+* run `helm install`, `helm upgrade` and `helm rollback` (which in return could create, modify and delete services, deployments, pods, secrets, configmaps, etc...).
+
+One option to do this is to assign the job full `cluster-admin` access to your Kubernetes cluster, which we provide in
+[job-executor/workloadClusterRoles.yaml](job-executor/workloadClusterRoles.yaml).
+
+For more locked down setups, we recommend creating a dedicated Service Account and only link the needed roles/permissions depending on your Helm Chart. For more details, we recommend reading about [RBAC in the Kubernetes docs](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
+
+
+For now, we continue this example by using the full `cluster-admin` access:
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/christian-kreuzberger-dtx/keptn-job-executor-delivery-poc/main/job-executor/workloadClusterRoles.yaml
 ```
@@ -61,8 +67,7 @@ helm install prometheus prometheus-community/prometheus --namespace monitoring -
 
 **Install Keptns prometheus-service**
 ```bash
-helm install -n keptn prometheus-service https://github.com/keptn-contrib/prometheus-service/releases/download/0.7.4/prometheus-service-0.7.4.tgz --wait
-kubectl apply -f https://raw.githubusercontent.com/keptn-contrib/prometheus-service/0.7.4/deploy/role.yaml -n monitoring
+helm install -n keptn prometheus-service https://github.com/keptn-contrib/prometheus-service/releases/download/0.8.5/prometheus-service-0.8.5.tgz --wait
 ```
 
 ## Project Setup
@@ -116,6 +121,12 @@ keptn add-resource --project=$PROJECT --service=helloservice --stage=qa --resour
 keptn configure monitoring prometheus --project=$PROJECT --service=helloservice
 ```
 
+**Add Remediation Config**
+
+```bash
+keptn add-resource --project=$PROJECT --service=helloservice --stage=production --resource=remediation.yaml
+```
+
 **Trigger delivery**
 
 ```bash
@@ -123,14 +134,34 @@ IMAGE="ghcr.io/podtato-head/podtatoserver"
 VERSION=v0.1.1
 SLOW_VERSION=v0.1.2
 
-keptn trigger delivery --project=$PROJECT --service=helloservice --image=$IMAGE --tag=$VERSION --labels=version=$VERSION
+keptn trigger delivery --project=$PROJECT --service=helloservice --image=$IMAGE:$VERSION --labels=version=$VERSION
 ```
 
+This should result in Version v0.1.1 being deployed to `qa` stage, with an `approval` waiting on `prod` stage. You can verify the result by executing
+```bash
+kubectl -n $PROJECT-qa get deployments -owide
+kubectl -n $PROJECT-production get deployments -owide
+```
 
 **Trigger delivery of slow version**
 
 ```bash
-keptn trigger delivery --project=$PROJECT --service=helloservice --image=$IMAGE --tag=$SLOW_VERSION --labels=version=$SLOW_VERSION,slow=true
+keptn trigger delivery --project=$PROJECT --service=helloservice --image=$IMAGE:$SLOW_VERSION --labels=version=$SLOW_VERSION,slow=true
+```
+
+This should result in a failed quality gate in the `qa` stage, with a `rollback` triggered.
+
+**Simulate a remediation**
+
+In case of high-load, a remediation action would be to scale up the respective deployment. This can be simulated by sending a fake remediation.triggered event (which would be sent by prometheus-service):
+
+```bash
+keptn send event -f remediation.triggered.json
+```
+
+You should be able to verify the result by seeing multiple replicas in production:
+```bash
+kubectl -n $PROJECT-production get pods
 ```
 
 ## Cleanup
