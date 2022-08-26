@@ -11,25 +11,35 @@
 
 ## Pre Requisite
 
+### Kubernetes Cluster
 **You need access to a Kubernetes cluster with at least 4 vCPUs and 8 GB memory**
 
-I recommend using Google Kubernetes Engine, but local setups with K3s/K3d should also work fine.
+I recommend using a local setup based on K3s/K3d without traefik:
+```bash
+curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v5.3.0 bash
+k3d cluster create mykeptn -p "8082:80@loadbalancer" --k3s-arg "--no-deploy=traefik@server:*"
+```
 
+Other Kubernetes flavours work as well.
 
-**Install Keptn 0.17.x control-plane only**
+### Install Keptn 0.17.x control-plane only
 
 ```bash
 curl -sL https://get.keptn.sh | KEPTN_VERSION=0.17.0 bash
 keptn install --endpoint-service-type=LoadBalancer
 ```
+or, alternatively, use `helm install`:
+```bash
+helm -n keptn --create-namespace install keptn keptn --repo=https://charts.keptn.sh \
+  --set=apiGatewayNginx.type=LoadBalancer \
+  --wait
+```
 
-**Install job-executor-service**
-
-Minimum version: 0.2.4
+### Install job-executor-service
 
 ```bash
 
-TASK_SUBSCRIPTION='sh.keptn.event.deployment.triggered\,sh.keptn.event.test.triggered\,sh.keptn.event.rollback.triggered'
+TASK_SUBSCRIPTION='sh.keptn.event.deployment.triggered\,sh.keptn.event.test.triggered\,sh.keptn.event.rollback.triggered\,sh.keptn.event.action.triggered'
 
 helm upgrade --install --create-namespace -n keptn-jes \
   job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/0.2.5-next.0/job-executor-service-0.2.5-next.0.tgz \
@@ -56,7 +66,7 @@ For now, we continue this example by using the full `cluster-admin` access:
 kubectl apply -f https://raw.githubusercontent.com/christian-kreuzberger-dtx/keptn-job-executor-delivery-poc/main/job-executor/workloadClusterRoles.yaml
 ```
 
-**Install Prometheus Monitoring**
+### Install Prometheus Monitoring
 
 ```bash
 kubectl create namespace monitoring
