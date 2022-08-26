@@ -19,31 +19,73 @@ I recommend using a local setup based on K3s/K3d without traefik:
 curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v5.3.0 bash
 k3d cluster create mykeptn -p "8082:80@loadbalancer" --k3s-arg "--no-deploy=traefik@server:*"
 ```
+**Note**: You can skip the argument `-p "8082:80@loadbalancer"` on Linux.
 
 Other Kubernetes flavours work as well.
 
-### Install Keptn 0.17.x control-plane only
+
+### Gitea as a git upstream
+
+Keptn 0.17.x and newer requires you to have a git upstream. We recommend the [keptn-gitea-provisioner-service](https://github.com/keptn-sandbox/keptn-gitea-provisioner-service) and [Gitea](https://gitea.io).
 
 ```bash
-curl -sL https://get.keptn.sh | KEPTN_VERSION=0.17.0 bash
-keptn install --endpoint-service-type=LoadBalancer
-```
-or, alternatively, use `helm install`:
-```bash
-helm -n keptn --create-namespace install keptn keptn --repo=https://charts.keptn.sh \
-  --set=apiGatewayNginx.type=LoadBalancer \
+GITEA_ADMIN_USERNAME=GiteaAdmin
+GITEA_NAMESPACE=gitea
+GITEA_ADMIN_PASSWORD=$(date +%s | sha256sum | base64 | head -c 32)
+
+export GITEA_ENDPOINT="http://gitea-http.${GITEA_NAMESPACE}:3000"
+
+helm repo add gitea-charts https://dl.gitea.io/charts/
+helm repo update
+helm install -n ${GITEA_NAMESPACE} gitea gitea-charts/gitea \
+  --create-namespace \
+  --set memcached.enabled=false \
+  --set postgresql.enabled=false \
+  --set gitea.config.database.DB_TYPE=sqlite3 \
+  --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+  --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
+  --set gitea.config.server.OFFLINE_MODE=true \
+  --set gitea.config.server.ROOT_URL=${GITEA_ENDPOINT}/ \
   --wait
+
+
+helm install keptn-gitea-provisioner-service https://github.com/keptn-sandbox/keptn-gitea-provisioner-service/releases/download/0.1.1/keptn-gitea-provisioner-service-0.1.1.tgz \
+  --set gitea.endpoint=${GITEA_ENDPOINT} \
+  --set gitea.admin.create=true \
+  --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+  --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
+  --wait
+```
+
+### Install Keptn 0.17.x control-plane only
+
+**WARNING: THE INSTRUCTIONS BELOW WILL ONLY WORK WITH KEPTN 0.17.X - NEWER OR OLDER VERSIONS ARE NOT SUPPORTED**
+
+```bash
+helm repo add keptn https://charts.keptn.sh
+helm repo update
+helm install -n keptn keptn keptn/keptn --create-namespace \
+  --version 0.17.0 \
+  --set=apiGatewayNginx.type=LoadBalancer \
+  --set "features.automaticProvisioning.serviceURL=http://keptn-gitea-provisioner-service.default" \
+  --wait
+```
+
+Make sure you also have a compatible version of the Keptn CLI, e.g., [0.17.0](https://github.com/keptn/keptn/releases/tag/0.17.0):
+```bash
+curl -sL https://get.keptn.sh | KEPTN_VERSION=0.17.0 bash
 ```
 
 ### Install job-executor-service
 
 ```bash
-
 TASK_SUBSCRIPTION='sh.keptn.event.deployment.triggered\,sh.keptn.event.test.triggered\,sh.keptn.event.rollback.triggered\,sh.keptn.event.action.triggered'
+JES_VERSION=0.2.5-next.0
+JES_NAMESPACE=keptn-jes
 
-helm upgrade --install --create-namespace -n keptn-jes \
-  job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/0.2.5-next.0/job-executor-service-0.2.5-next.0.tgz \
- --set remoteControlPlane.autoDetect.namespace="keptn",remoteControlPlane.autoDetect.enabled="true",remoteControlPlane.api.token="",remoteControlPlane.api.hostname="",remoteControlPlane.api.protocol="http"
+helm upgrade --install --create-namespace -n ${JES_NAMESPACE} \
+  job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/${JES_VERSION}/job-executor-service-${JES_VERSION}.tgz \
+  --set remoteControlPlane.autoDetect.enabled="true",remoteControlPlane.topicSubscription="${TASK_SUBSCRIPTION}",remoteControlPlane.api.token="",remoteControlPlane.api.hostname="",remoteControlPlane.api.protocol=""
 ```
 
 **Kubernetes Role Based Access Control (RBAC) for helm deploy task**
