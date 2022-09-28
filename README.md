@@ -59,7 +59,7 @@ helm install keptn-gitea-provisioner-service https://github.com/keptn-sandbox/ke
 
 ### Install Keptn 0.18.x control-plane only
 
-**WARNING: THE INSTRUCTIONS BELOW WILL ONLY WORK WITH KEPTN 0.17.X - NEWER OR OLDER VERSIONS ARE NOT SUPPORTED**
+**WARNING: THE INSTRUCTIONS BELOW WILL ONLY WORK WITH KEPTN 0.18.X - NEWER OR OLDER VERSIONS ARE NOT SUPPORTED**
 
 ```bash
 helm repo add keptn https://charts.keptn.sh
@@ -71,7 +71,7 @@ helm install -n keptn keptn keptn/keptn --create-namespace \
   --wait
 ```
 
-Make sure you also have a compatible version of the Keptn CLI, e.g., [0.18.0](https://github.com/keptn/keptn/releases/tag/0.18.0):
+Make sure you also have a compatible version of the Keptn CLI, e.g., [0.18.2](https://github.com/keptn/keptn/releases/tag/0.18.2):
 ```bash
 curl -sL https://get.keptn.sh | KEPTN_VERSION=0.18.2 bash
 ```
