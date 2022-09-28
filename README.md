@@ -26,7 +26,7 @@ Other Kubernetes flavours work as well.
 
 ### Gitea as a git upstream
 
-Keptn 0.17.x and newer requires you to have a git upstream. We recommend the [keptn-gitea-provisioner-service](https://github.com/keptn-sandbox/keptn-gitea-provisioner-service) and [Gitea](https://gitea.io).
+Keptn 0.18.x and newer requires you to have a git upstream. We recommend the [keptn-gitea-provisioner-service](https://github.com/keptn-sandbox/keptn-gitea-provisioner-service) and [Gitea](https://gitea.io).
 
 ```bash
 GITEA_ADMIN_USERNAME=GiteaAdmin
@@ -57,35 +57,38 @@ helm install keptn-gitea-provisioner-service https://github.com/keptn-sandbox/ke
   --wait
 ```
 
-### Install Keptn 0.17.x control-plane only
+### Install Keptn 0.18.x control-plane only
 
-**WARNING: THE INSTRUCTIONS BELOW WILL ONLY WORK WITH KEPTN 0.17.X - NEWER OR OLDER VERSIONS ARE NOT SUPPORTED**
+**WARNING: THE INSTRUCTIONS BELOW WILL ONLY WORK WITH KEPTN 0.18.X - NEWER OR OLDER VERSIONS ARE NOT SUPPORTED**
 
 ```bash
 helm repo add keptn https://charts.keptn.sh
 helm repo update
 helm install -n keptn keptn keptn/keptn --create-namespace \
-  --version 0.17.0 \
+  --version 0.18.2 \
   --set=apiGatewayNginx.type=LoadBalancer \
   --set "features.automaticProvisioning.serviceURL=http://keptn-gitea-provisioner-service.default" \
   --wait
 ```
 
-Make sure you also have a compatible version of the Keptn CLI, e.g., [0.17.0](https://github.com/keptn/keptn/releases/tag/0.17.0):
+Make sure you also have a compatible version of the Keptn CLI, e.g., [0.18.2](https://github.com/keptn/keptn/releases/tag/0.18.2):
 ```bash
-curl -sL https://get.keptn.sh | KEPTN_VERSION=0.17.0 bash
+curl -sL https://get.keptn.sh | KEPTN_VERSION=0.18.2 bash
 ```
 
 ### Install job-executor-service
 
 ```bash
+KEPTN_API_TOKEN=$(kubectl get secret keptn-api-token -n keptn -ojsonpath={.data.keptn-api-token} | base64 -d)
 TASK_SUBSCRIPTION='sh.keptn.event.deployment.triggered\,sh.keptn.event.test.triggered\,sh.keptn.event.rollback.triggered\,sh.keptn.event.action.triggered'
-JES_VERSION=0.2.5-next.0
+JES_VERSION=0.3.0
 JES_NAMESPACE=keptn-jes
 
 helm upgrade --install --create-namespace -n ${JES_NAMESPACE} \
-  job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/${JES_VERSION}/job-executor-service-${JES_VERSION}.tgz \
-  --set remoteControlPlane.autoDetect.enabled="true",remoteControlPlane.topicSubscription="${TASK_SUBSCRIPTION}",remoteControlPlane.api.token="",remoteControlPlane.api.hostname="",remoteControlPlane.api.protocol=""
+--set=remoteControlPlane.api.hostname=api-gateway-nginx.keptn \
+--set=remoteControlPlane.api.token=${KEPTN_API_TOKEN} \
+--set=remoteControlPlane.topicSubscription=${TASK_SUBSCRIPTION} \
+job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/${JES_VERSION}/job-executor-service-${JES_VERSION}.tgz
 ```
 
 **Kubernetes Role Based Access Control (RBAC) for helm deploy task**
