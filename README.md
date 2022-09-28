@@ -86,9 +86,9 @@ JES_NAMESPACE=keptn-jes
 
 helm upgrade --install --create-namespace -n ${JES_NAMESPACE} \
 --set=remoteControlPlane.api.hostname=api-gateway-nginx.keptn \
---set=remoteControlPlane.api.token=$KEPTN_API_TOKEN \
---set=remoteControlPlane.topicSubscription="sh.keptn.event.deployment.triggered\,sh.keptn.event.test.triggered\,sh.keptn.event.action.triggered" \
-job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/$JES_VERSION/job-executor-service-$JES_VERSION.tgz
+--set=remoteControlPlane.api.token=${KEPTN_API_TOKEN} \
+--set=remoteControlPlane.topicSubscription=${TASK_SUBSCRIPTION} \
+job-executor-service https://github.com/keptn-contrib/job-executor-service/releases/download/${JES_VERSION}/job-executor-service-${JES_VERSION}.tgz
 ```
 
 **Kubernetes Role Based Access Control (RBAC) for helm deploy task**
