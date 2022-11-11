@@ -1,3 +1,5 @@
+# WARNING: This repo is currently not maintained, the example might be outdated
+
 # Job Executor Continuous Delivery PoC
 
 **Goal**: Create a simple but powerful Proof of Concept using Keptn Control-Plane and Job-Executor-Service to
